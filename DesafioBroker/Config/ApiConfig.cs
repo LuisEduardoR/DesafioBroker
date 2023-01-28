@@ -2,38 +2,56 @@
 
 namespace DesafioBroker.Config
 {
-    public class EmailConfig : IConfig
+    public class ApiConfig : IConfig
     {
-        public const string EMAIL_CONFIG_FILE_NAME = "EmailConfig.json";
+        public const string API_CONFIG_FILE_NAME = "ApiConfig.json";
 
-        class EmailConfigJson
+        const string DEFAULT_PROVIDER = "default";
+        const string DEFAULT_KEY = "api-key";
+
+        class ApiConfigJson
         {
-            public string receiverEmail;
+            public string provider;
+            public string key;
 
-            public EmailConfigJson()
+            public ApiConfigJson()
             {
-                receiverEmail = string.Empty;
+                provider = DEFAULT_PROVIDER;
+                key = DEFAULT_KEY;
             }
         }
 
-        EmailConfigJson configJson;
+        ApiConfigJson configJson;
 
         bool isLoaded;
 
-        public string ReceiverEmail {
-            get 
+        public string Provider
+        {
+            get
             {
                 if (!IsLoaded())
                 {
                     throw new Exception("Config not loaded");
                 }
-                return configJson.receiverEmail;
+                return configJson.provider;
             }
         }
 
-        public EmailConfig()
+        public string Key
         {
-            configJson = new EmailConfigJson();
+            get
+            {
+                if (!IsLoaded())
+                {
+                    throw new Exception("Config not loaded");
+                }
+                return configJson.key;
+            }
+        }
+
+        public ApiConfig()
+        {
+            configJson = new ApiConfigJson();
             isLoaded = false;
         }
 
@@ -56,19 +74,19 @@ namespace DesafioBroker.Config
             using (StreamReader file = new StreamReader(GetFullPath()))
             {
                 string stringJson = file.ReadToEnd();
-                configJson = JsonConvert.DeserializeObject<EmailConfigJson>(stringJson) ?? new EmailConfigJson();
+                configJson = JsonConvert.DeserializeObject<ApiConfigJson>(stringJson) ?? new ApiConfigJson();
                 isLoaded = true;
             }
         }
 
         public bool IsLoaded()
-        { 
+        {
             return isLoaded;
         }
 
         public string GetFullPath()
         {
-            return Path.Join(Program.CONFIG_FILE_PATH, EMAIL_CONFIG_FILE_NAME);
+            return Path.Join(Program.CONFIG_FILE_PATH, API_CONFIG_FILE_NAME);
         }
     }
 }

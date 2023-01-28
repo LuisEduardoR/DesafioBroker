@@ -16,6 +16,8 @@
  */
 
 using DesafioBroker.Config;
+using DesafioBroker.Services;
+using DesafioBroker.Services.QuoteTracker;
 
 namespace DesafioBroker
 {
@@ -26,9 +28,18 @@ namespace DesafioBroker
         public const string CONFIG_FILE_PATH = "Data";
 
         public const int SUCCESS_EXIT_CODE = 0;
-        public const int INIT_FAIL_EXIT_CODE = 1;
+        public const int CONFIG_LOAD_FAIL_EXIT_CODE = 1;
+        public const int SERVICE_INIT_FAIL_EXIT_CODE = 2;
+        public const int RUNTIME_ERROR_CODE = 3;
 
         const int ARGS_LENGTH = 3;
+
+        static Semaphore ConsoleSemaphore;
+
+        static Program()
+        {
+            ConsoleSemaphore = new Semaphore(0, 1);
+        }
 
         static void Main(string[] args)
         {
@@ -40,40 +51,94 @@ namespace DesafioBroker
             }
 
             // Regular program execution.
-            AssetConfig assetConfig;
-            EmailConfig emailConfig;
+            AssetConfig assetConfig = new AssetConfig();
+            EmailConfig emailConfig = new EmailConfig();
+            ApiConfig apiConfig = new ApiConfig();
 
             try
             {
-                if (!Directory.Exists(CONFIG_FILE_PATH))
-                {
-                    Directory.CreateDirectory(CONFIG_FILE_PATH);
-                }
+                LoadConfiguration(args, assetConfig, emailConfig, apiConfig);
 
-                if (args.Length == ARGS_LENGTH)
+                try
                 {
-                    Console.WriteLine("Loading config from program arguments...");
-                    assetConfig = new AssetConfig(args);
-                    Console.WriteLine($"Updating {assetConfig.GetFullPath()}...");
-                    assetConfig.Save();
+                    EmailService emailService = new EmailService(emailConfig);
+                    QuoteTrackerService quoteTrackerService = new QuoteTrackerService(assetConfig, apiConfig, emailService);
+
+                    try
+                    {
+                        Console.WriteLine();
+                        Console.WriteLine("Preparing to init services...");
+                        Console.WriteLine();
+                        Console.WriteLine("< Press ENTER at any time to finish execution >");
+                        Console.WriteLine();
+
+                        // NOTE: Use ThreadSafeWriteLine from now on.
+                        ConsoleSemaphore.Release();
+
+                        ThreadSafeWriteLine("Starting email service...");
+                        Thread emailServiceThread = new Thread(emailService.Run);
+                        emailServiceThread.Start();
+
+                        ThreadSafeWriteLine("Starting tracker service...");
+                        Thread quoteTrackerServiceThread = new Thread(quoteTrackerService.Run);
+                        quoteTrackerServiceThread.Start();
+
+                        Console.ReadLine();
+
+                        emailService.Stop();
+                        quoteTrackerService.Stop();
+
+                        emailServiceThread.Join();
+                        quoteTrackerServiceThread.Join();
+                    }
+                    catch (Exception runtimeException)
+                    {
+                        Console.WriteLine($"Error: {runtimeException.Message}");
+                        Environment.Exit(RUNTIME_ERROR_CODE);
+                    }
                 }
-                else
+                catch (Exception serviceInitException)
                 {
-                    assetConfig = new AssetConfig();
-                    Console.WriteLine($"Loading {assetConfig.GetFullPath()}...");
-                    assetConfig.Load(createDefault: true);
+                    Console.WriteLine($"Error: {serviceInitException.Message}");
+                    Environment.Exit(SERVICE_INIT_FAIL_EXIT_CODE);
                 }
-                
-                emailConfig = new EmailConfig();
-                Console.WriteLine($"Loading {emailConfig.GetFullPath()}...");
-                emailConfig.Load(createDefault: true);
-            } 
-            catch (Exception ex)
+            }
+            catch (Exception configLoadException)
             {
-                Console.WriteLine($"Error: {ex.Message}");
-                Environment.Exit(INIT_FAIL_EXIT_CODE);
+                Console.WriteLine($"Error: {configLoadException.Message}");
+                Environment.Exit(CONFIG_LOAD_FAIL_EXIT_CODE);
+            }
+        }
+
+        static void LoadConfiguration(string[] args, AssetConfig assetConfig, EmailConfig emailConfig, ApiConfig apiConfig)
+        {
+            if (!Directory.Exists(CONFIG_FILE_PATH))
+            {
+                Directory.CreateDirectory(CONFIG_FILE_PATH);
             }
 
+            if (args.Length == ARGS_LENGTH)
+            {
+                Console.WriteLine("Loading config from program arguments...");
+                assetConfig.LoadFromArgs(args);
+                Console.WriteLine($"Updating {assetConfig.GetFullPath()}...");
+                assetConfig.Save();
+                Console.WriteLine("DONE");
+            }
+            else
+            {
+                Console.WriteLine($"Loading {assetConfig.GetFullPath()}...");
+                assetConfig.Load(createDefault: true);
+                Console.WriteLine("DONE");
+            }
+
+            Console.WriteLine($"Loading {emailConfig.GetFullPath()}...");
+            emailConfig.Load(createDefault: true);
+            Console.WriteLine("DONE");
+
+            Console.WriteLine($"Loading {apiConfig.GetFullPath()}...");
+            apiConfig.Load(createDefault: true);
+            Console.WriteLine("DONE");
         }
 
         static void PrintUsage()
@@ -81,6 +146,23 @@ namespace DesafioBroker
             Console.WriteLine($"Usage: {PROGRAM_EXECUTABLE_NAME} [ASSET] [MAX PRICE] [MIN PRICE]");
             Console.WriteLine();
             Console.WriteLine($" Example: {PROGRAM_EXECUTABLE_NAME} PETR4 22.67 22.59");
+        }
+
+        public static void ThreadSafeWriteLine(string line)
+        {
+            ConsoleSemaphore.WaitOne();
+            Console.WriteLine(line);
+            ConsoleSemaphore.Release();
+        }
+
+        public static void ThreadSafeWriteLines(string[] lines)
+        {
+            ConsoleSemaphore.WaitOne();
+            foreach (string line in lines)
+            {
+                Console.WriteLine(line);
+            }
+            ConsoleSemaphore.Release();
         }
     }
 }
