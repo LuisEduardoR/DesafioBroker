@@ -15,24 +15,25 @@
  * O programa deve ficar continuamente monitorando a cotação do ativo enquanto estiver rodando.
  */
 
+using DesafioBroker.Config;
+
 namespace DesafioBroker
 {
     class Program
     {
-        const string PROGRAM_EXECUTABLE_NAME = "DesafioBroker.exe";
+        public const string PROGRAM_EXECUTABLE_NAME = "DesafioBroker.exe";
 
-        const string CONFIG_FILE_PATH = "Data";
-        const string EMAIL_CONFIG_FILE_NAME = "EmailConfig.json";
+        public const string CONFIG_FILE_PATH = "Data";
+
+        public const int SUCCESS_EXIT_CODE = 0;
+        public const int INIT_FAIL_EXIT_CODE = 1;
 
         const int ARGS_LENGTH = 3;
-
-        const int SUCCESS_EXIT_CODE = 0;
-        const int INIT_FAIL_EXIT_CODE = 1;
 
         static void Main(string[] args)
         {
             // Incorrect args length, print usage and ends the program.
-            if (args.Length != ARGS_LENGTH)
+            if (args.Length != 0 && args.Length != ARGS_LENGTH)
             {
                 PrintUsage();
                 Environment.Exit(SUCCESS_EXIT_CODE);
@@ -41,10 +42,31 @@ namespace DesafioBroker
             // Regular program execution.
             AssetConfig assetConfig;
             EmailConfig emailConfig;
+
             try
             {
-                ProcessArgs(args, out assetConfig);
-                LoadConfigs(out emailConfig);
+                if (!Directory.Exists(CONFIG_FILE_PATH))
+                {
+                    Directory.CreateDirectory(CONFIG_FILE_PATH);
+                }
+
+                if (args.Length == ARGS_LENGTH)
+                {
+                    Console.WriteLine("Loading config from program arguments...");
+                    assetConfig = new AssetConfig(args);
+                    Console.WriteLine($"Updating {assetConfig.GetFullPath()}...");
+                    assetConfig.Save();
+                }
+                else
+                {
+                    assetConfig = new AssetConfig();
+                    Console.WriteLine($"Loading {assetConfig.GetFullPath()}...");
+                    assetConfig.Load(createDefault: true);
+                }
+                
+                emailConfig = new EmailConfig();
+                Console.WriteLine($"Loading {emailConfig.GetFullPath()}...");
+                emailConfig.Load(createDefault: true);
             } 
             catch (Exception ex)
             {
@@ -59,30 +81,6 @@ namespace DesafioBroker
             Console.WriteLine($"Usage: {PROGRAM_EXECUTABLE_NAME} [ASSET] [MAX PRICE] [MIN PRICE]");
             Console.WriteLine();
             Console.WriteLine($" Example: {PROGRAM_EXECUTABLE_NAME} PETR4 22.67 22.59");
-        }
-
-        static void ProcessArgs(string[] args, out AssetConfig assetConfig)
-        {
-            assetConfig = new AssetConfig(args);
-        }
-
-        static void LoadConfigs(out EmailConfig emailConfig)
-        {
-            if (!Directory.Exists(CONFIG_FILE_PATH))
-            {
-                Directory.CreateDirectory(CONFIG_FILE_PATH);
-            }
-
-            string emailConfigPath = Path.Join(CONFIG_FILE_PATH, EMAIL_CONFIG_FILE_NAME);
-            if (!File.Exists(emailConfigPath))
-            {
-                using (StreamWriter emailConfigFile = new StreamWriter(emailConfigPath))
-                {
-                    emailConfigFile.Write(EmailConfig.DEFAULT_CONFIG);
-                }
-            }
-
-            emailConfig = new EmailConfig(emailConfigPath);
         }
     }
 }
