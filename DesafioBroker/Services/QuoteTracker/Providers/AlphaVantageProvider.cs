@@ -1,7 +1,7 @@
 ﻿using DesafioBroker.Config;
 using System.Text.Json.Nodes;
 
-namespace DesafioBroker.Services.QuoteTracker
+namespace DesafioBroker.Services.QuoteTracker.Providers
 {
     internal class AlphaVantageProvider : IApiProvider
     {

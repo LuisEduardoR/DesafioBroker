@@ -1,4 +1,4 @@
-﻿namespace DesafioBroker.Services.QuoteTracker
+﻿namespace DesafioBroker.Services.QuoteTracker.Providers
 {
     internal interface IApiProvider
     {

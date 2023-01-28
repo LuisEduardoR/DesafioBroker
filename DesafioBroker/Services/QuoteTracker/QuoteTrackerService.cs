@@ -1,4 +1,5 @@
 ﻿using DesafioBroker.Config;
+using DesafioBroker.Services.QuoteTracker.Providers;
 
 namespace DesafioBroker.Services.QuoteTracker
 {
