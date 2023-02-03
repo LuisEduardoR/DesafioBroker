@@ -25,7 +25,7 @@ namespace DesafioBroker.Config
                 this.requestDelay = requestDelay;
             }
 
-            public AssetConfigJson() : this(string.Empty, float.MaxValue, 0, 60.0f) { }
+            public AssetConfigJson() : this("asset", 100000.0f, 0.0f, 60.0f) { }
         }
 
         AssetConfigJson configJson;
@@ -115,7 +115,7 @@ namespace DesafioBroker.Config
             configJson.assetToTrack = args[0];
             configJson.maxPrice = float.Parse(args[1]);
             configJson.minPrice = float.Parse(args[2]);
-
+            ValidateConfig();
             isLoaded = true;
         }
 
@@ -133,22 +133,22 @@ namespace DesafioBroker.Config
         {
             if (configJson.assetToTrack == string.Empty)
             {
-                throw new ArgumentException("\"assetToTrack\" must not be empty");
+                throw new ArgumentException($"\"assetToTrack\" in {GetFullPath()} must not be empty");
             }
 
-            if (configJson.maxPrice < 0.0f)
+            if (configJson.maxPrice <= 0.0f)
             {
-                throw new ArgumentException("\"maxPrice\" must not be negative");
+                throw new ArgumentException($"\"maxPrice\" in {GetFullPath()}  must be greater than zero");
             }
 
-            if (configJson.minPrice < 0.0f)
+            if (configJson.minPrice <= 0.0f)
             {
-                throw new ArgumentException("\"minPrice\" must not be negative");
+                throw new ArgumentException($"\"minPrice\" in {GetFullPath()}  must be greater than zero");
             }
 
             if (configJson.requestDelay <= 0.0f)
             {
-                throw new ArgumentException("\"requestDelay\" must be greater than zero");
+                throw new ArgumentException($"\"requestDelay\" in {GetFullPath()} must be greater than zero");
             }
         }
     }

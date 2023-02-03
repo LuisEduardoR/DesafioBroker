@@ -30,7 +30,8 @@ namespace DesafioBroker
         public const int SUCCESS_EXIT_CODE = 0;
         public const int CONFIG_LOAD_FAIL_EXIT_CODE = 1;
         public const int SERVICE_INIT_FAIL_EXIT_CODE = 2;
-        public const int RUNTIME_ERROR_CODE = 3;
+        public const int NOT_CONFIGURED_EXIT_CODE = 3;
+        public const int RUNTIME_ERROR_CODE = 4;
 
         const int ARGS_LENGTH = 3;
 
@@ -59,7 +60,7 @@ namespace DesafioBroker
 
             try
             {
-                LoadConfiguration(args, assetConfig, emailConfig, apiConfig);
+                LoadConfig(args, assetConfig, emailConfig, apiConfig);
 
                 try
                 {
@@ -107,16 +108,16 @@ namespace DesafioBroker
             }
             catch (Exception configLoadException)
             {
-                Console.WriteLine($"Error: {configLoadException.Message}");
+                Console.WriteLine($"Error:\n{configLoadException.Message}");
                 Environment.Exit(CONFIG_LOAD_FAIL_EXIT_CODE);
             }
         }
 
-        static void LoadConfiguration(string[] args, AssetConfig assetConfig, EmailConfig emailConfig, ApiConfig apiConfig)
+        static void LoadConfig(string[] args, AssetConfig assetConfig, EmailConfig emailConfig, ApiConfig apiConfig)
         {
             if (!Directory.Exists(CONFIG_FILE_PATH))
             {
-                Directory.CreateDirectory(CONFIG_FILE_PATH);
+                CreateConfigDirectory(assetConfig, emailConfig, apiConfig);
             }
 
             if (args.Length == ARGS_LENGTH)
@@ -141,6 +142,24 @@ namespace DesafioBroker
             Console.WriteLine($"Loading {apiConfig.GetFullPath()}...");
             apiConfig.Load(createDefault: true);
             Console.WriteLine("DONE");
+        }
+
+        static void CreateConfigDirectory(AssetConfig assetConfig, EmailConfig emailConfig, ApiConfig apiConfig)
+        {
+            Console.WriteLine($"Creating config directory in {CONFIG_FILE_PATH}...");
+            Directory.CreateDirectory(CONFIG_FILE_PATH);
+            Console.WriteLine("DONE");
+            Console.WriteLine();
+
+            Console.WriteLine($"Creating default config files...");
+            assetConfig.Save();
+            emailConfig.Save();
+            apiConfig.Save();
+            Console.WriteLine("DONE");
+            Console.WriteLine();
+
+            Console.WriteLine($"Please edit the config files on {CONFIG_FILE_PATH} and them execute {PROGRAM_EXECUTABLE_NAME} again!");
+            Environment.Exit(NOT_CONFIGURED_EXIT_CODE);
         }
 
         static void PrintUsage()
