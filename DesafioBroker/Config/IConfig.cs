@@ -4,7 +4,7 @@
     {
         string GetFullPath();
         void Save();
-        void Load(bool createDefault = false);
+        void Load();
         bool IsLoaded();
     }
 }

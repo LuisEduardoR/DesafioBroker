@@ -25,7 +25,7 @@ namespace DesafioBroker.Config
                 this.requestDelay = requestDelay;
             }
 
-            public AssetConfigJson() : this("asset", 100000.0f, 0.0f, 60.0f) { }
+            public AssetConfigJson() : this(string.Empty, 100000.0f, 0.0f, 60.0f) { }
         }
 
         AssetConfigJson configJson;
@@ -94,13 +94,8 @@ namespace DesafioBroker.Config
             }
         }
 
-        public void Load(bool createDefault = false)
+        public void Load()
         {
-            if(!File.Exists(GetFullPath()) && createDefault)
-            {
-                Save();
-            }
-
             using (StreamReader file = new StreamReader(GetFullPath()))
             {
                 string stringJson = file.ReadToEnd();

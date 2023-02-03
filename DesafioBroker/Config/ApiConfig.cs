@@ -64,13 +64,8 @@ namespace DesafioBroker.Config
             }
         }
 
-        public void Load(bool createDefault = false)
+        public void Load()
         {
-            if (!File.Exists(GetFullPath()) && createDefault)
-            {
-                Save();
-            }
-
             using (StreamReader file = new StreamReader(GetFullPath()))
             {
                 string stringJson = file.ReadToEnd();

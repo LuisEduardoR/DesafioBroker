@@ -131,16 +131,16 @@ namespace DesafioBroker
             else
             {
                 Console.WriteLine($"Loading {assetConfig.GetFullPath()}...");
-                assetConfig.Load(createDefault: true);
+                assetConfig.Load();
                 Console.WriteLine("DONE");
             }
 
             Console.WriteLine($"Loading {emailConfig.GetFullPath()}...");
-            emailConfig.Load(createDefault: true);
+            emailConfig.Load();
             Console.WriteLine("DONE");
 
             Console.WriteLine($"Loading {apiConfig.GetFullPath()}...");
-            apiConfig.Load(createDefault: true);
+            apiConfig.Load();
             Console.WriteLine("DONE");
         }
 
