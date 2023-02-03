@@ -57,12 +57,19 @@ namespace DesafioBroker.Services
 
             while (!ShouldStopExecution())
             {
-                emailSemaphore.WaitOne();               
+                MailMessage? emailToSend = null;
+
+                emailSemaphore.WaitOne();      
                 if (emailQueue.Count > 0)
                 {
-                    SendEmail();
+                    emailToSend = emailQueue.Dequeue();
                 }
                 emailSemaphore.Release();
+
+                if (emailToSend != null)
+                {
+                    SendEmail(emailToSend);
+                }
 
                 Thread.Sleep(1000);
             }
@@ -155,11 +162,11 @@ namespace DesafioBroker.Services
             return email;
         }
 
-        void SendEmail()
+        void SendEmail(MailMessage emailToSend)
         {
             try
             {
-                smtpClient.Send(emailQueue.Dequeue());
+                smtpClient.Send(emailToSend);
 
                 Program.WriteServiceMessage(SERVICE_NAME, $"{DateTime.Now} - Email notification sent");
             } 
