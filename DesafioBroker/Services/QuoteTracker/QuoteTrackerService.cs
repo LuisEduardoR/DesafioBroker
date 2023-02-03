@@ -5,6 +5,8 @@ namespace DesafioBroker.Services.QuoteTracker
 {
     internal class QuoteTrackerService : IService
     {
+        const string SERVICE_NAME = "Quote tracker";
+
         const string DEFAULT_PROVIDER_STRING = "default";
 
         AssetConfig assetConfig;
@@ -32,7 +34,7 @@ namespace DesafioBroker.Services.QuoteTracker
         public void Run()
         {
             isRunning = true;
-            Program.ThreadSafeWriteLine("Quote tracker service is running!");
+            Program.ThreadSafeWriteLine($"{SERVICE_NAME} service is running!");
 
             while (!ShouldStopExecution())
             {
@@ -43,7 +45,7 @@ namespace DesafioBroker.Services.QuoteTracker
 
                 if (quoteTask.Result.HasValue)
                 {
-                    WriteServiceMessage($"{quoteTime} - {assetConfig.AssetToTrack} = {quoteTask.Result.Value}");
+                    Program.WriteServiceMessage(SERVICE_NAME, $"{quoteTime} - {assetConfig.AssetToTrack} = ${quoteTask.Result.Value}");
                     ProcessQuotePrice(quoteTask.Result.Value);
                 }
 
@@ -54,7 +56,7 @@ namespace DesafioBroker.Services.QuoteTracker
             }
 
             isRunning = false;
-            Program.ThreadSafeWriteLine("Quote tracker service has stopped!");
+            Program.ThreadSafeWriteLine($"{SERVICE_NAME} service has stopped!");
         }
 
         public void Stop()
@@ -76,26 +78,18 @@ namespace DesafioBroker.Services.QuoteTracker
         {
             if (!emailService.IsRunning())
             {
-                WriteServiceMessage("Unable to send email notification - Service is not running!");
+                Program.WriteServiceMessage(SERVICE_NAME, "Unable to send email notification - Service is not running!");
                 return;
             }
 
             if (quotePrice > assetConfig.MaxPrice)
             {
-                emailService.Notify(EmailService.EmailNotificationType.AboveMaxPrice, quotePrice);
+                emailService.Notify(EmailService.EmailNotificationType.Sell, assetConfig.AssetToTrack, quotePrice);
             } 
             else if (quotePrice < assetConfig.MinPrice)
             {
-                emailService.Notify(EmailService.EmailNotificationType.BelowMinPrice, quotePrice);
+                emailService.Notify(EmailService.EmailNotificationType.Buy, assetConfig.AssetToTrack, quotePrice);
             }
-        }
-
-        void WriteServiceMessage(string message)
-        {
-            string messageTitle = "# Quote tracker service message:";
-            string messageBody = $"# {message}";
-            string separator = new String('#', Math.Max(messageTitle.Length, messageBody.Length));
-            Program.ThreadSafeWriteLines( new string[] { "", separator, messageTitle, messageBody, separator });
         }
 
         IApiProvider LoadAPIService(ApiConfig config)

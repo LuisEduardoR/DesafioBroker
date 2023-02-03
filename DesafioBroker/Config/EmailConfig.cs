@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using System.Net.Mail;
 
 namespace DesafioBroker.Config
 {
@@ -6,19 +7,84 @@ namespace DesafioBroker.Config
     {
         public const string EMAIL_CONFIG_FILE_NAME = "EmailConfig.json";
 
+        const string DEFAULT_CLIENT = "default";
+        const string DEFAULT_EMAIL = "example@mail.com";
+        const string DEFAULT_PASSWORD = "password";
+        const string DEFAULT_DISPLAY_NAME = "Quote Tracker";
+
         class EmailConfigJson
         {
+            public string smtpClient;
+
+            public string senderEmail;
+            public string senderPassword;
+            public string senderDisplayName;
+
             public string receiverEmail;
 
             public EmailConfigJson()
             {
-                receiverEmail = string.Empty;
+                smtpClient = DEFAULT_CLIENT;
+
+                senderEmail = DEFAULT_EMAIL;
+                senderPassword = DEFAULT_PASSWORD;
+                senderDisplayName = DEFAULT_DISPLAY_NAME;
+
+                receiverEmail = DEFAULT_EMAIL;
             }
         }
 
         EmailConfigJson configJson;
 
         bool isLoaded;
+
+        public string SmtpClient
+        {
+            get
+            {
+                if (!IsLoaded())
+                {
+                    throw new Exception("Config not loaded");
+                }
+                return configJson.smtpClient;
+            }
+        }
+
+        public string SenderEmail
+        {
+            get
+            {
+                if (!IsLoaded())
+                {
+                    throw new Exception("Config not loaded");
+                }
+                return configJson.senderEmail;
+            }
+        }
+
+        public string SenderPassword
+        {
+            get
+            {
+                if (!IsLoaded())
+                {
+                    throw new Exception("Config not loaded");
+                }
+                return configJson.senderPassword;
+            }
+        }
+
+        public string SenderDisplayName
+        {
+            get
+            {
+                if (!IsLoaded())
+                {
+                    throw new Exception("Config not loaded");
+                }
+                return configJson.senderDisplayName;
+            }
+        }
 
         public string ReceiverEmail {
             get 

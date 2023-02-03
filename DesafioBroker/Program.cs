@@ -34,6 +34,8 @@ namespace DesafioBroker
 
         const int ARGS_LENGTH = 3;
 
+        const int MAX_SEPARATOR_LENGTH = 80;
+
         static Semaphore ConsoleSemaphore;
 
         static Program()
@@ -164,5 +166,42 @@ namespace DesafioBroker
             }
             ConsoleSemaphore.Release();
         }
+
+        public static void WriteServiceMessage(string serviceName, string message)
+        {
+            string messageTitle = $"# {serviceName} service message:";
+            string messageBody = $"# {message}";
+            string separator = new String('#', Math.Min(Math.Max(messageTitle.Length, messageBody.Length), MAX_SEPARATOR_LENGTH));
+            ThreadSafeWriteLines(new string[] { "", separator, messageTitle, messageBody, separator });
+        }
+
+        public static void WriteServiceMessages(string serviceName, string[] messages)
+        {
+            int maxMessageLength = 0;
+
+            string messageTitle = $"# {serviceName} service message:";
+
+            List<string> messagesBody = new List<string>() { "", messageTitle };
+
+            foreach (string message in messages)
+            {
+                messagesBody.Add($"# {message}");
+            }
+
+            foreach (string message in messagesBody)
+            {
+                if (message.Length > maxMessageLength)
+                {
+                    maxMessageLength = Math.Min(message.Length, MAX_SEPARATOR_LENGTH);
+                }
+            }
+
+            string messageSeparator = new String('#', maxMessageLength);
+
+            messagesBody.Insert(1, messageSeparator);
+            messagesBody.Add(messageSeparator);
+            ThreadSafeWriteLines(messagesBody.ToArray());
+        }
+
     }
 }
