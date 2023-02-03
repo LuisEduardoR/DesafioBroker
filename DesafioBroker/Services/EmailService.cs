@@ -71,7 +71,7 @@ namespace DesafioBroker.Services
                     SendEmail(emailToSend);
                 }
 
-                Thread.Sleep(1000);
+                Thread.Sleep(1);
             }
 
             isRunning = false;

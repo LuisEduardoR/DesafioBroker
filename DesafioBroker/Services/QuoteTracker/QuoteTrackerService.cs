@@ -51,7 +51,7 @@ namespace DesafioBroker.Services.QuoteTracker
 
                 while (!ShouldStopExecution() && (DateTime.Now - quoteTime).TotalMilliseconds < 1000.0f * assetConfig.RequestDelay) 
                 { 
-                    Thread.Sleep(1000);
+                    Thread.Sleep(1);
                 }
             }
 
