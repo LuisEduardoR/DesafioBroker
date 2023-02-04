@@ -23,7 +23,7 @@ namespace DesafioBroker
 {
     class Program
     {
-        public const string PROGRAM_EXECUTABLE_NAME = "DesafioBroker.exe";
+        const string PROGRAM_EXECUTABLE_NAME = "DesafioBroker.exe";
 
         public const string CONFIG_FILE_PATH = "Data";
 
@@ -34,6 +34,8 @@ namespace DesafioBroker
         public const int RUNTIME_ERROR_CODE = 4;
 
         const int ARGS_LENGTH = 3;
+
+        static readonly string[] HELP_OPTIONS = { "-h", "--help", "-H", "--HELP", "--Help" };
 
         const int MAX_SEPARATOR_LENGTH = 80;
 
@@ -46,8 +48,8 @@ namespace DesafioBroker
 
         static void Main(string[] args)
         {
-            // Incorrect args length, print usage and ends the program.
-            if (args.Length != 0 && args.Length != ARGS_LENGTH)
+            // Incorrect args or --help option: print usage and ends the program.
+            if (!IsValidArgs(args) || IsHelpOption(args))
             {
                 PrintUsage();
                 Environment.Exit(SUCCESS_EXIT_CODE);
@@ -111,6 +113,26 @@ namespace DesafioBroker
                 Console.WriteLine($"Error:\n{configLoadException.Message}");
                 Environment.Exit(CONFIG_LOAD_FAIL_EXIT_CODE);
             }
+        }
+
+        static bool IsValidArgs(string[] args)
+        {
+            if (args.Length != 0 && args.Length != ARGS_LENGTH)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        static bool IsHelpOption(string[] args)
+        {
+            if (args.Length > 0)
+            {
+                return HELP_OPTIONS.Contains(args[0]);
+            }
+
+            return false;
         }
 
         static void LoadConfig(string[] args, AssetConfig assetConfig, EmailConfig emailConfig, ApiConfig apiConfig)
