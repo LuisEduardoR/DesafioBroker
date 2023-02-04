@@ -18,7 +18,9 @@ namespace DesafioBroker.Services
         {
             None,
             Sell,
-            Buy
+            Buy,
+            CancelSell,
+            CancelBuy,
         }
 
         EmailConfig emailConfig;
@@ -133,12 +135,20 @@ namespace DesafioBroker.Services
                     order = $"{quotedAsset} Buy Order";
                     message = $"Buy order for {quotedAsset} at ${quotePrice}";
                     break;
+                case EmailNotificationType.CancelSell:
+                    order = $"{quotedAsset} Cancel Sell Order";
+                    message = $"Cancel sell orders for {quotedAsset}, price decreased to ${quotePrice}";
+                    break;
+                case EmailNotificationType.CancelBuy:
+                    order = $"{quotedAsset} Cancel Buy Order";
+                    message = $"Cancel buy orders for {quotedAsset}, price increased to ${quotePrice}";
+                    break;
                 default:
                     throw new InvalidOperationException($"Can't send an email notification of type {type}");
             }
 
-            string subject = $"[Desafio broker] {order}";
-            string htmlBody = $"<h1>{subject}</h1><div>{DateTime.Now} - {message}</div>";
+            string subject = $"[Desafio Broker] {order}";
+            string htmlBody = $"<h1>{order}</h1><div>{DateTime.Now} - {message}</div>";
 
             MailMessage email = CreateEmail(subject, htmlBody);
 

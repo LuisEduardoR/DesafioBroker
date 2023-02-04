@@ -16,6 +16,8 @@ namespace DesafioBroker.Services.QuoteTracker
         bool isRunning;
         int stopSignal;
 
+        float? lastQuotePrice;
+
         public QuoteTrackerService(AssetConfig assetConfig, ApiConfig apiConfig, EmailService emailService)
         {
             isRunning = false;
@@ -29,6 +31,8 @@ namespace DesafioBroker.Services.QuoteTracker
             this.assetConfig = assetConfig;
             this.apiProvider = LoadAPIService(apiConfig);
             this.emailService = emailService;
+
+            this.lastQuotePrice = null;
         }
 
         public void Run()
@@ -47,6 +51,7 @@ namespace DesafioBroker.Services.QuoteTracker
                 {
                     Program.WriteServiceMessage(SERVICE_NAME, $"{quoteTime} - {assetConfig.AssetToTrack} = ${quoteTask.Result.Value}");
                     ProcessQuotePrice(quoteTask.Result.Value);
+                    lastQuotePrice = quoteTask.Result;
                 }
 
                 while (!ShouldStopExecution() && (DateTime.Now - quoteTime).TotalMilliseconds < 1000.0f * assetConfig.RequestDelay) 
@@ -84,11 +89,28 @@ namespace DesafioBroker.Services.QuoteTracker
 
             if (quotePrice > assetConfig.MaxPrice)
             {
-                emailService.Notify(EmailService.EmailNotificationType.Sell, assetConfig.AssetToTrack, quotePrice);
+                if (lastQuotePrice == null || lastQuotePrice < assetConfig.MaxPrice)
+                {
+                    emailService.Notify(EmailService.EmailNotificationType.Sell, assetConfig.AssetToTrack, quotePrice);
+                }
             } 
             else if (quotePrice < assetConfig.MinPrice)
             {
-                emailService.Notify(EmailService.EmailNotificationType.Buy, assetConfig.AssetToTrack, quotePrice);
+                if (lastQuotePrice == null || lastQuotePrice > assetConfig.MinPrice)
+                {
+                    emailService.Notify(EmailService.EmailNotificationType.Buy, assetConfig.AssetToTrack, quotePrice);
+                }
+            } 
+            else if(lastQuotePrice != null)
+            {
+                if (lastQuotePrice > assetConfig.MaxPrice)
+                {
+                    emailService.Notify(EmailService.EmailNotificationType.CancelSell, assetConfig.AssetToTrack, quotePrice);
+                } 
+                else if (lastQuotePrice < assetConfig.MinPrice)
+                {
+                    emailService.Notify(EmailService.EmailNotificationType.CancelBuy, assetConfig.AssetToTrack, quotePrice);
+                }
             }
         }
 
@@ -99,6 +121,8 @@ namespace DesafioBroker.Services.QuoteTracker
                 case DEFAULT_PROVIDER_STRING:
                 case AlphaVantageProvider.PROVIDER_NAME:
                     return new AlphaVantageProvider(config);
+                case TestProvider.PROVIDER_NAME:
+                    return new TestProvider(config);
                 default:
                     throw new ArgumentException($"Provider {config.Provider} is not supported, configure a new one in {config.GetFullPath()}");
             }
